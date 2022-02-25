@@ -1,0 +1,221 @@
+{% load static %}
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="{% url 'Chat:Home' %}">Chats</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item active">
+          <a class="nav-link" href="{% url 'Chat:Create' %}">Create Room <span class="sr-only">(current)</span></a>
+        </li>
+      </ul>
+      <div class="form-inline my-2 my-lg-0">
+
+        <div class="spinner-border text-light" role="status" id="SearchSpinner">
+          <span class="sr-only">Loading...</span>
+        </div>
+        <span style="margin: 5px;"></span>
+        <input class="form-control mr-sm-2" type="search" placeholder="Enter Room Code"
+          id="RoomSearch" aria-label="Search" Join-Room-Url="{% url 'Chat:Join-Room' %}">
+
+        <ul class="navbar-nav">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Hello {{ request.user.get_short_name }} 
+              <img src="{{ profile.avatar.url }}" width="30" height="30" class="rounded-circle">
+            </a>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink" style="position: fixed; right: 10px;top: auto; left: auto;">
+              <a class="dropdown-item" href="{% url '' %}">Dashboard</a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="{% url 'Profile:Profile' %}">Edit Profile</a>
+              <a class="dropdown-item" href="{% url 'Profile:Password' %}">Change Password</a>
+              <a class="dropdown-item" href="{% url 'Profile:Settings' %}">Settings</a>
+              {% if request.user.is_superuser %}
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="{% url 'admin:index' %}">Admin Dashboard</a>
+              {% endif %}
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="{% url 'Auth:Login' %}">Switch Account</a>
+              <a class="dropdown-item" href="{% url 'Auth:Logout' %}">Log Out</a>
+            </div>
+          </li>
+        </ul>
+
+      </div>
+    </div>
+</nav>
+
+
+
+<button type="button" id="MessageModelButton" class="btn btn-primary" style="display: none;"
+data-toggle="modal" data-target="#MessageModel"></button>
+
+<!-- Modal -->
+<div class="modal fade" id="MessageModel" tabindex="-1" aria-labelledby="MessageModelLabel" aria-hidden="true">
+<div class="modal-dialog">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title" id="MessageModelLabel"></h5>
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <div class="modal-body" id="MessageModelData"></div>
+  </div>
+</div>
+</div>
+
+
+{% csrf_token %}
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+
+    document.getElementById('SearchSpinner').style.display = 'none';
+    
+    var _isSearching = false;
+
+    document.getElementById('RoomSearch').onkeydown = (event) => {
+
+      if (event.keyCode != 13){
+        return ;
+      }
+      else if (event.target.value < 1){
+        return ;
+      }
+      else if (_isSearching){
+        return ;
+      }
+
+      _JoinRoomUrl = event.target.getAttribute('Join-Room-Url')
+      if (!_JoinRoomUrl){
+        return ;
+      }
+
+      _isSearching = true;
+      document.getElementById('SearchSpinner').style.display = '';
+
+      $.ajax(_JoinRoomUrl, {
+        
+        type: 'GET',
+
+        headers: { 
+            "X-CSRFToken": document.getElementsByName('csrfmiddlewaretoken')[0].value
+        },
+
+        dataType: 'json',
+
+        data: {
+          'code': event.target.value
+        },
+
+        success: function (data, status, xhr) {
+
+          console.log(data)
+          console.log(status)
+          console.log(xhr)
+
+          _isSearching = false;
+          document.getElementById('SearchSpinner').style.display = 'none';
+
+          document.getElementById('MessageModelLabel').innerText = 'Join Room';
+
+          document.getElementById('MessageModelData').innerText = '';
+
+          document.getElementById('MessageModelData').appendChild(
+            (() => {
+
+              _Password = document.createElement('input');
+              _Password.classList.add('form-control');
+              _Password.setAttribute('type', 'password');
+              _Password.setAttribute('id', 'RoomPassword');
+              _Password.setAttribute('placeholder', 'Enter Room Password');
+
+              return _Password
+
+            })()
+          )
+
+          document.getElementById('MessageModelData').appendChild(
+            document.createElement('br')
+          )
+
+          document.getElementById('MessageModelData').appendChild(
+            (() => {
+
+              _Button = document.createElement('button');
+              _Button.classList.add('btn');
+              _Button.classList.add('btn-success');
+              _Button.innerText = 'Join Room'
+              _Button.onclick = (event) => {
+
+                $.ajax(_JoinRoomUrl + '?code=' + document.getElementById('RoomSearch').value, {
+        
+                  type: 'POST',
+
+                  headers: { 
+                      "X-CSRFToken": document.getElementsByName('csrfmiddlewaretoken')[0].value
+                  },
+
+                  dataType: 'json',
+
+                  data: {
+                    'password': document.getElementById('RoomPassword').value
+                  },
+
+                  success: function (data, status, xhr) {
+
+                    console.log(data)
+                    console.log(status)
+                    console.log(xhr)
+
+                    _isSearching = false;
+                    document.getElementById('MessageModelLabel').innerText = 'Success';
+                    document.getElementById('MessageModelData').style.color = '';
+                    document.getElementById('MessageModelData').innerText = 'Success  Joining Room';
+                  },
+
+                  error: function (jqXhr, textStatus, errorMessage) {
+                    console.log(errorMessage);
+                    console.log(textStatus);
+                    console.log(jqXhr);
+                    
+                    _isSearching = false;
+                    document.getElementById('MessageModelLabel').innerText = 'Error';
+                    document.getElementById('MessageModelData').style.color = 'red';
+                    document.getElementById('MessageModelData').innerText = 'Error in Joining Room Or Wrong Password';
+                  }
+
+                })
+              }
+
+              return _Button
+
+            })()
+          )
+          document.getElementById('MessageModelButton').click();
+        },
+
+        error: function (jqXhr, textStatus, errorMessage) {
+          console.log(errorMessage);
+          console.log(textStatus);
+          console.log(jqXhr);
+          
+          _isSearching = false;
+          document.getElementById('MessageModelLabel').innerText = 'Error';
+          document.getElementById('SearchSpinner').style.display = 'none';
+          document.getElementById('MessageModelData').style.color = 'red';
+          document.getElementById('MessageModelData').innerText = 'Room Not Found';
+          document.getElementById('MessageModelButton').click();
+        }
+
+      })
+    }
+
+  }, false);
+</script>
+

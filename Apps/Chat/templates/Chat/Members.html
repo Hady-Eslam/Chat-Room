@@ -1,0 +1,188 @@
+{% extends 'Chat/shared/base.html' %}
+{% load static %}
+
+{% block title %} Room Members {% endblock %}
+
+{% block styles %}
+<link href="{% static 'Chat/css/Members.css' %}" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+
+<br /><br />
+<h3 class="text-center">Room Members</h3>
+<br /><br />
+
+{% csrf_token %}
+
+
+<div class="row">
+    {% for Member in object_list %}
+    <div class="col-md-3 col-xs-6 col-xss-12" id="{{ Member.id }}">
+        <div class="member text-center">
+            <div class="member-top">
+                <figure>
+                    <img src="{{ Member.user.profile.avatar.url }}" alt="Member Profile Avatar">
+                </figure>
+            </div><!-- End .member-top -->
+            {% if Member.is_pending %}
+                <a href="javascript:void(0);" class="Pending"
+                Pending-Url="{% url 'Chat:Member' room.code Member.id %}" style="color: green;">Approve</a>
+                <br />
+            {% elif Member.is_admin == False %}
+                <a href="javascript:void(0);" class="Upgrade" User-id="{{ Member.id }}"
+                Upgrade-Url="{% url 'Chat:Member' room.code Member.id %}?upgrade=true"
+                style="color: green;">Upgrade To Admin</a>
+                <br />
+            {% else %}
+                <a href="javascript:void(0);" class="Degrade" User-id="{{ Member.id }}"
+                Degrade-Url="{% url 'Chat:Member' room.code Member.id %}?degrade=true"
+                style="color: red;">Degrade From Admin</a>
+                <br />
+            {% endif %}
+            <a href="javascript:void(0);" class="Kick-Out" User-id="{{ Member.id }}"
+                Kick-Out-Url="{% url 'Chat:Member' room.code Member.id %}" style="color: red;">Kick Out</a>
+            <h3 class="member-title"><a href="#">{{ Member.user.get_short_name }}</a> 
+                <small>({% if room.creator == Member.user %}Co-founder{% elif Member.is_admin %}Admin{% elif Member.is_pending %}Pending{% else %}Member{% endif %})</small>
+            </h3>
+            <p>{{ Member.user.profile.bio|default:'' }}</p>
+        </div><!-- End .member -->
+    </div><!-- End .col-md-3 -->
+    {% endfor %}
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        function ApproveUrl(_Approve_Url, target){
+
+            $.ajax(_Approve_Url , {
+
+                type: 'PATCH',
+
+                headers: { 
+                    "X-CSRFToken": document.getElementsByName('csrfmiddlewaretoken')[0].value
+                },
+
+                dataType: 'json',
+
+                success: function (data, status, xhr) {
+
+                    console.log(data)
+                    console.log(status)
+                    console.log(xhr)
+
+                    target.remove()
+                },
+
+                error: function (jqXhr, textStatus, errorMessage) {
+                    console.log(errorMessage);
+                    console.log(textStatus);
+                    console.log(jqXhr);
+                    alert(jqXhr.responseJSON?.Result);
+                }
+            });
+        }
+
+        function DeleteUrl(_Delete_Url, target){
+
+            $.ajax(_Delete_Url , {
+
+                type: 'DELETE',
+
+                headers: { 
+                    "X-CSRFToken": document.getElementsByName('csrfmiddlewaretoken')[0].value
+                },
+
+                dataType: 'json',
+
+                success: function (data, status, xhr) {
+
+                    console.log(data)
+                    console.log(status)
+                    console.log(xhr)
+
+                    target.remove();
+                },
+
+                error: function (jqXhr, textStatus, errorMessage) {
+                    console.log(errorMessage);
+                    console.log(textStatus);
+                    console.log(jqXhr);
+
+                    console.log(jqXhr.responseJSON?.error)
+                    alert(jqXhr.responseJSON?.error)
+                }
+            });
+        }
+
+        document.querySelectorAll('.Kick-Out').forEach(element => {
+            element.onclick = (event) => {
+                event.preventDefault();
+
+                _Delete_Url = event.target.getAttribute('Kick-Out-Url');
+                if (!_Delete_Url){
+                    return
+                }
+
+                if (confirm('Are You Sure You Want To Kick User Out?')){
+                    DeleteUrl(_Delete_Url, document.getElementById(event.target.getAttribute('User-id')));
+                }
+
+            }
+        });
+
+        document.querySelectorAll('.Degrade').forEach(element => {
+            element.onclick = (event) => {
+                event.preventDefault();
+
+                _Degrade_Url = event.target.getAttribute('Degrade-Url');
+                if (!_Degrade_Url){
+                    return
+                }
+
+                if (confirm('Are You Sure You Want To Degrade User From Admin?')){
+                    DeleteUrl(_Degrade_Url, element);
+                }
+
+            }
+        });
+
+
+        document.querySelectorAll('.Pending').forEach(element => {
+            element.onclick = (event) => {
+                event.preventDefault();
+
+                _Approve_Url = event.target.getAttribute('Pending-Url');
+                if (!_Approve_Url){
+                    return
+                }
+                
+                if (confirm('Are You Sure You Want To Approve User?')){
+                    ApproveUrl(_Approve_Url, element);
+                }
+            }
+        });
+
+
+        document.querySelectorAll('.Upgrade').forEach(element => {
+            element.onclick = (event) => {
+                event.preventDefault();
+
+                _Approve_Url = event.target.getAttribute('Upgrade-Url');
+                if (!_Approve_Url){
+                    return
+                }
+
+                if (confirm('Are You Sure You Want To Upgrade User To Admin?')){
+                    ApproveUrl(_Approve_Url, element);
+                }
+            }
+        });
+
+    }, false);
+</script>
+{% endblock %}

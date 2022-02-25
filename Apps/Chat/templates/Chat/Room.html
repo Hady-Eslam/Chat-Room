@@ -1,0 +1,193 @@
+{% extends 'Chat/shared/base.html' %}
+
+{% load static %}
+
+{% block title %} {{ room.name }} {% endblock %}
+
+{% block styles %}
+<link href="{% static 'Chat/css/Room.css' %}" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+
+{% csrf_token %}
+
+<div class="row clearfix">
+    <div class="col-lg-12">
+        <div class="card chat-app">
+            <div id="plist" class="people-list">
+                <ul class="list-unstyled chat-list mt-2 mb-0">
+                    {% for Member in members %}
+                        <li class="clearfix">
+                            <img src="{{ Member.user.profile.avatar.url }}" alt="avatar">
+                            <div class="about">
+                                <div class="name">{{ Member.user.get_short_name|default:Member.user.get_username }}</div>
+                                <div class="status"> <i class="fa fa-circle online"></i> Joined At: {{ Member.created_at|date:'d-m-Y'|default:'' }} </div>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="chat">
+                <div class="chat-header clearfix">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <a href="javascript:void(0);" data-toggle="modal" data-target="#view_info">
+                                <img src="{{ profile.avatar.url }}" alt="avatar">
+                            </a>
+                            <div class="chat-about">
+                                <h6 class="m-b-0">{{ profile.user.get_short_name }}</h6>
+                                <small>Last seen: 2 hours ago</small>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 hidden-sm text-right">
+                            <a href="{% url 'Chat:Settings' room.code %}" class="btn btn-outline-info"><i class="fa fa-cogs"></i></a>
+                            <a href="{% url 'Chat:Members' room.code %}" class="btn btn-outline-secondary"><i class="fa fa-users" aria-hidden="true"></i></a>
+                            <a href="javascript:void(0);" class="btn btn-outline-warning"><i class="fa fa-question"></i></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-history">
+                    <ul class="m-b-0" id="All-Messages">
+                        {% for message in room_messages %}
+                            {% if message.user == profile.user %}
+                                <li class="clearfix">
+                                    <div class="message-data text-right">
+                                        <div style="display: inline-block;">
+                                            <span class="message-data-time" style="color: blueviolet;">{{ message.user.get_short_name }}</span><br />
+                                            <span class="message-data-time">{{ message.created_at }}</span>
+                                        </div>
+                                        <img src="{{ message.user.profile.avatar.url }}" alt="avatar">
+                                    </div>
+                                    <div class="message other-message float-right">{{ message.message }}</div>
+                                </li>
+                            {% else %}
+                                <li class="clearfix">
+                                    <div class="message-data">
+                                        <img src="{{ message.user.profile.avatar.url }}" alt="avatar">
+                                        <div style="display: inline-block;">
+                                            <span class="message-data-time" style="color: blueviolet;">{{ message.user.get_short_name }}</span><br />
+                                            <span class="message-data-time">{{ message.created_at }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="message other-message">{{ message.message }}</div>
+                                </li>
+                            {% endif %}
+                        {% empty %}
+                            <p class="text-center">No Message</p>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="chat-message clearfix">
+                    <div class="input-group mb-0">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fa fa-send"></i></span>
+                        </div>
+                        <input type="text" class="form-control" placeholder="Enter message here..." id="Message">                                    
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" Room-Code="{{ room.code }}" id="Room-Info" />
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        
+        _RoomCode = document.getElementById('Room-Info').getAttribute('Room-Code');
+
+        _protocol = (location.protocol == 'https:') ? 'wss://' : 'ws://'
+
+        const ChatSocket = new WebSocket(
+            _protocol
+            + window.location.host
+            + '/ws/chat/'
+            + _RoomCode
+            + '/'
+        );
+
+
+        ChatSocket.onmessage = (event) => {
+            const message = JSON.parse(event.data).message;
+            document.getElementById('All-Messages').appendChild(
+                (() => {
+                    _elementD = document.createElement('li');
+                    _elementD.classList.add('clearfix');
+                    _elementD.appendChild(
+                        (() => {
+                            _elementC = document.createElement('div')
+                            _elementC.classList.add('message-data');
+                            _elementC.classList.add('text-right');
+                            _elementC.appendChild(
+                                (() => {
+                                    _elementA = document.createElement('span')
+                                    _elementA.classList.add('message-data-time');
+                                    _elementA.innerText = message.by
+                                    return _elementA
+                                })()
+                            )
+                            _elementC.appendChild(
+                                (() => {
+                                    return document.createElement('br')
+                                })()
+                            )
+                            _elementC.appendChild(
+                                (() => {
+                                    _elementB = document.createElement('span')
+                                    _elementB.classList.add('message-data-time');
+                                    _elementB.innerText = message.created_at
+                                    return _elementB
+                                })()
+                            )
+                            return _elementC
+                        })()
+                    )
+                    _elementD.appendChild(
+                        (() => {
+                            _elementE = document.createElement('div')
+                            _elementE.classList.add('message');
+                            _elementE.classList.add('other-message');
+                            _elementE.classList.add('float-right');
+                            _elementE.innerText = message.data
+                            return _elementE
+                        })()
+                    )
+
+                    return _elementD
+                })()
+            )
+        }
+
+
+        ChatSocket.onclose = (event) => {
+            console.log('Room Is Closed')
+        }
+
+
+        document.getElementById('Message').onkeypress = (event) => {
+
+            if (event.keyCode != 13){
+                return;
+            }
+
+            _Message = document.getElementById('Message');
+            if (_Message.value < 1 || _Message.value > 1000){
+                return 
+            }
+
+            console.log(_Message)
+
+            ChatSocket.send(JSON.stringify({
+                'message': _Message.value
+            }));
+        }
+
+    }, false);
+</script>
+{% endblock %}

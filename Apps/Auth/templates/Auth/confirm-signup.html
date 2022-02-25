@@ -1,0 +1,35 @@
+{% extends 'Auth/base.html' %}
+{% load static %}
+
+{% block title %} Confirm Sign Up {% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{% static 'Auth/css/signup.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="form-signin">
+
+	{% csrf_token %}
+	
+	<img class="mb-4" src="{% static 'Auth/images/Logo.png' %}" alt="" width="72" height="72">
+	<h1 class="h3 mb-3 font-weight-normal">Confirm Your Account</h1>
+
+	{% if Found %}
+		<div class="alert alert-success" role="alert">
+			Your Account Has Been Confirmed
+		</div>
+	{% else %}
+		<div class="alert alert-danger" role="alert">
+			Token Not Found Or Expired
+		</div>
+	{% endif %}
+	
+	<br />
+
+	<p class="mt-5 mb-3 text-muted">Already Having account? <a href="{% url 'Auth:Login' %}">Login Now</a></p>
+
+</div>
+
+{% endblock %}

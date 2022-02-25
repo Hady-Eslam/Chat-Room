@@ -1,0 +1,48 @@
+{% extends 'Info/base.html' %}
+{% load static %}
+
+{% block title %} Feedback {% endblock %}
+
+{% block feedback %} active {% endblock %}
+
+{% block content %}
+<form method="post" id="Form" style="padding-bottom: 20px;">
+
+    {% csrf_token %}
+
+    <h2>Make Your Feedback</h2>
+    <br />
+
+    {% if request.flash_message.exists.success_create_feedback %}
+        <div class="alert alert-success" role="alert">
+            {{ request.flash_message.success_create_feedback }}
+        </div>
+    {% endif %}
+    
+    <div class="custom-control custom-checkbox mb-3">
+        <label for="title">Feedback Title</label>
+        <input class="form-control" id="title" name="title" type="text" placeholder="Feedback Title"
+            value="{{ form.title.value|default:'' }}" required>
+        <ul style="color: #dc3545" id="title-errors">
+            {{ form.title.errors }}
+        </ul>
+    </div>
+
+    <div class="mb-3">
+        <label for="feedback">Feedback</label>
+        <textarea class="form-control" id="feedback" placeholder="Enter Your Feedback" required rows="5"
+            id="feedback" name="feedback">{{ form.feedback.value|default:'' }}</textarea>
+        <ul style="color: #dc3545" id="feedback-errors">
+            {{ form.feedback.errors }}
+        </ul>
+    </div>
+
+    <button style="width: 50%;" type="submit" class="btn btn-success">Send</button>
+</form>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script src="{% static 'Info/javascript/feedback.js' %}"></script>
+{% endblock %}

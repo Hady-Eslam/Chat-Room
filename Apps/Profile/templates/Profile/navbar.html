@@ -1,0 +1,39 @@
+{% load static %}
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="{% url 'Profile:Profile' %}">Profile</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav mr-auto">
+      </ul>
+      <div class="form-inline my-2 my-lg-0">
+
+        <ul class="navbar-nav">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Hello {{ request.user.get_short_name }} 
+              <img src="{{ profile.avatar.url }}" width="30" height="30" class="rounded-circle">
+            </a>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink" style="position: fixed; right: 10px;top: auto; left: auto;">
+              <a class="dropdown-item" href="{% url '' %}">Dashboard</a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="{% url 'Profile:Profile' %}">Edit Profile</a>
+              <a class="dropdown-item" href="{% url 'Profile:Password' %}">Change Password</a>
+              <a class="dropdown-item" href="{% url 'Profile:Settings' %}">Settings</a>
+              {% if request.user.is_superuser %}
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="{% url 'admin:index' %}">Admin Dashboard</a>
+              {% endif %}
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="{% url 'Auth:Login' %}">Switch Account</a>
+              <a class="dropdown-item" href="{% url 'Auth:Logout' %}">Log Out</a>
+            </div>
+          </li>
+        </ul>
+
+      </div>
+    </div>
+</nav>

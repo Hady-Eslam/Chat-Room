@@ -1,0 +1,87 @@
+{% extends 'Chat/shared/base.html' %}
+
+{% block title %} {{ room.name }} {% endblock %}
+
+{% block content %}
+
+{% if request.flash_message.exists.update_room %}
+    {% include 'Chat/shared/model.html' with ModelMessage=request.flash_message.update_room %}
+{% endif %}
+
+<br /><br />
+<h3 class="text-center">Room Settings</h3>
+<br /><br />
+
+<form method="post" id="Form" enctype="multipart/form-data">
+
+    {% csrf_token %}
+
+    <div class="form-group row">
+        <label for="name" class="col-sm-2 col-form-label">Room Name</label>
+        <div class="col-sm-7">
+            <input type="text" class="form-control" id="name" name="name" placeholder="Enter Room Name"
+                value="{{ form.name.value|default:'' }}" required>
+            <div style="color: #dc3545; font-size: 80%;">
+                {{ form.name.errors }}
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label for="password" class="col-sm-2 col-form-label">Room password</label>
+        <div class="col-sm-7">
+            <input type="password" class="form-control" id="password" name="password" placeholder="Write The Same Password">
+            <div style="color: #dc3545; font-size: 80%;">
+                {{ form.password.errors }}
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label for="description">Room Description</label>
+        <textarea class="form-control col-sm-9" id="description" placeholder="Write Descrption"
+            name="description" rows="5">{{ form.description.value }}</textarea>
+        <div style="color: #dc3545; font-size: 80%;">
+            {{ form.description.errors }}
+        </div>
+    </div>
+
+    <br />
+
+    <div class="form-group row">
+        <div class="col-sm-10">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="is_closed" name="is_closed"
+                {% if form.is_closed.value %}checked{% endif %}>
+                <label class="form-check-label" for="is_closed">
+                  Is Room Closed
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="need_permission" name="need_permission"
+                {% if form.need_permission.value %}checked{% endif %}>
+                <label class="form-check-label" for="need_permission">
+                  Does Joining Room Need Permission ?
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div class="custom-file">
+        <input type="file" class="custom-file-input" id="cover" name="cover">
+        <label class="custom-file-label" for="cover">Choose Room Cover</label>
+        <div style="color: #dc3545; font-size: 80%;">
+            {{ form.cover.errors }}
+        </div>
+    </div>
+
+    <br /><br />
+
+    <div class="text-center">
+        <button class="btn btn-success" type="submit" style="width: 50%;">Update</button>
+    </div>
+    
+</form>
+
+
+{% endblock %}
